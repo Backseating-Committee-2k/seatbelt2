@@ -1,18 +1,17 @@
 #include "lexer.hpp"
 #include "fmt/core.h"
-#include <algorithm>
 #include <array>
 #include <cassert>
 #include <ctre-unicode.hpp>
 #include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/core.hpp>
+#include <utility>
 
 struct LexerState final {
 private:
     std::string_view m_filename;
     std::u8string_view m_source_code;
     usize m_index{ 0 };
-    usize m_line_number{ 1 };
 
 public:
     LexerState(const std::string_view filename, const std::u8string_view sourceCode)
@@ -31,12 +30,7 @@ public:
     }
 
     void advance_bytes(const usize amount = 1) {
-        for (usize i = 0; i < amount; ++i) {
-            if (current() == '\n') {
-                ++m_line_number;
-            }
-            ++m_index;
-        }
+        m_index += amount;
     }
 
     [[nodiscard]] bool is_end_of_file() const {
@@ -49,10 +43,6 @@ public:
 
     [[nodiscard]] auto source_code() const {
         return m_source_code;
-    }
-
-    [[nodiscard]] auto line_number() const {
-        return m_line_number;
     }
 
     [[nodiscard]] auto source_location_from_bytes(const usize num_bytes = 1) const {
@@ -79,25 +69,6 @@ public:
         return m_source_code.substr(m_index);
     }
 };
-
-[[nodiscard]] constexpr std::array<bool, 127> source_character_lookup_table() {
-    auto result = std::array<bool, 127>{};
-    result['\t'] = true;
-    result['\n'] = true;
-    result['\r'] = true;
-    for (auto c = ' '; c <= '~'; ++c) {
-        result[c] = true;
-    }
-    return result;
-}
-
-[[nodiscard]] bool is_in_source_character_set(const char c) {
-    static constexpr auto lookup_table = source_character_lookup_table();
-    if (c < 0 or static_cast<usize>(c) >= lookup_table.size()) {
-        return false;
-    }
-    return lookup_table[static_cast<usize>(static_cast<unsigned char>(c))];
-}
 
 [[nodiscard]] Result<TokenVector, LexerError>
 tokenize(const std::string_view filename, const std::u8string_view source_code) {
@@ -288,5 +259,5 @@ tokenize(const std::string_view filename, const std::u8string_view source_code) 
             TokenType::EndOfFile
     );
 
-    return std::move(tokens);
+    return tokens;
 }
