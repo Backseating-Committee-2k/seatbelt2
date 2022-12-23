@@ -143,7 +143,7 @@ tokenize(const std::string_view filename, const std::u8string_view source_code) 
     };
     static constexpr char char_pattern[] = R"('(\\'|[ -\[\]-~]|\\[n\\tnvfr0])')";
     static constexpr char integer_pattern[] =
-            "(0o([0-7]+_?)+)|(0x([\\dA-Fa-to_string_view]+_?)+)|(0b([01]+_?)+)|(\\d+_?)+";
+            "(0o([0-7]+_?)+)|(0x([\\dA-Fa-f]+_?)+)|(0b([01]+_?)+)|(\\d+_?)+";
     static constexpr char identifier_pattern[] =
             R"((\p{XID_Start}|[^\u0000-\u007F])(\p{XID_Continue}|[^\u0000-\u007F])*)";
 
