@@ -15,6 +15,12 @@ if (MSVC)
     string(REGEX REPLACE "-W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 endif ()
 
+find_package(ctre CONFIG REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
+find_package(Microsoft.GSL CONFIG REQUIRED)
+find_package(tl-expected CONFIG REQUIRED)
+find_package(tl-optional CONFIG REQUIRED)
+find_package(unofficial-utf8proc CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
@@ -23,12 +29,18 @@ set(TARGET_LIST Seatbelt2)
 
 add_executable(Seatbelt2
         src/main.cpp
-        )
+        src/tokens.hpp src/types.hpp src/lexer.cpp src/lexer.hpp src/source_location.hpp src/error_codes.hpp src/utils.cpp src/utils.hpp)
 
 foreach (target ${TARGET_LIST})
     target_link_libraries(${target} PRIVATE cxxopts::cxxopts)
     target_link_libraries(${target} PRIVATE fmt::fmt)
     target_link_libraries(${target} PRIVATE range-v3 range-v3-meta range-v3::meta range-v3-concepts)
+    target_link_libraries(${target} PRIVATE ctre::ctre)
+    target_link_libraries(${target} PRIVATE magic_enum::magic_enum)
+    target_link_libraries(${target} PRIVATE Microsoft.GSL::GSL)
+    target_link_libraries(${target} PRIVATE tl::expected)
+    target_link_libraries(${target} PRIVATE tl::optional)
+    target_link_libraries(${target} PRIVATE utf8proc)
 
     # set warning levels
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

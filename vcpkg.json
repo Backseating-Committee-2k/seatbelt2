@@ -4,6 +4,12 @@
   "dependencies": [
     "cxxopts",
     "fmt",
-    "range-v3"
+    "range-v3",
+    "tl-optional",
+    "tl-expected",
+    "magic-enum",
+    "ctre",
+    "ms-gsl",
+    "utf8proc"
   ]
 }
