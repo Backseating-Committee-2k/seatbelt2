@@ -37,88 +37,15 @@ impl<'a> Scanner<'a> {
         let mut tokens = Vec::new();
         while !scanner.is_end_of_input() {
             match scanner.current() {
-                b':' => {
-                    scanner.next();
-                    tokens.push(Token::Colon);
-                }
-                b'|' => {
-                    scanner.next();
-                    tokens.push(Token::Pipe);
-                }
-                b'=' => {
-                    scanner.next();
-                    tokens.push(Token::Equals);
-                }
-                b'-' => {
-                    scanner.next();
-                    scanner.consume(b'>')?;
-                    tokens.push(Token::Arrow);
-                }
-                b'/' => {
-                    scanner.next();
-                    scanner.consume(b'/')?;
-                    while !scanner.is_end_of_input() && scanner.current() != b'\n' {
-                        scanner.next();
-                    }
-                }
-                b'"' => {
-                    scanner.next();
-                    let starting_index = scanner.index;
-                    while !scanner.is_end_of_input() && scanner.current() != b'"' {
-                        if char::is_whitespace(scanner.current() as char) {
-                            return Err(TokenizerError::WhitespaceInTokenLiteral(
-                                scanner.substring_until_current(starting_index),
-                            ));
-                        }
-                        scanner.next();
-                    }
-                    if scanner.is_end_of_input() {
-                        return Err(TokenizerError::UnclosedTokenLiteral(
-                            scanner.substring_until_current(starting_index),
-                        ));
-                    }
-                    let contents = scanner.substring_until_current(starting_index);
-                    scanner.next(); // consume closing '"'
-                    tokens.push(Token::TokenLiteral(contents));
-                }
-                b'{' => {
-                    scanner.next();
-                    let starting_index = scanner.index;
-                    let mut nesting_level = 1_u32;
-
-                    #[allow(clippy::nonminimal_bool)]
-                    while !scanner.is_end_of_input()
-                        && !(nesting_level == 1 && scanner.current() == b'}')
-                    {
-                        match scanner.current() {
-                            b'{' => nesting_level += 1,
-                            b'}' => nesting_level -= 1,
-                            _ => {}
-                        }
-                        scanner.next();
-                    }
-                    if scanner.is_end_of_input() {
-                        return Err(TokenizerError::UnclosedStringLiteral(
-                            scanner.substring_until_current(starting_index),
-                        ));
-                    }
-                    let contents = scanner.substring_until_current(starting_index);
-                    scanner.next(); // consume closing '}'
-                    tokens.push(Token::StringLiteral(contents.trim().to_string()));
-                }
-                current if is_identifier_start(current) => {
-                    let starting_index = scanner.index;
-                    scanner.next();
-                    while !scanner.is_end_of_input() && is_identifier_character(scanner.current()) {
-                        scanner.next();
-                    }
-                    tokens.push(Token::Identifier(
-                        scanner.substring_until_current(starting_index),
-                    ));
-                }
-                current if char::is_whitespace(current as char) => {
-                    scanner.next();
-                }
+                b':' => consume_into_token(&mut scanner, &mut tokens, Token::Colon),
+                b'|' => consume_into_token(&mut scanner, &mut tokens, Token::Pipe),
+                b'=' => consume_into_token(&mut scanner, &mut tokens, Token::Equals),
+                b'-' => arrow(&mut scanner, &mut tokens)?,
+                b'/' => comment(&mut scanner)?,
+                b'"' => token_literal(&mut scanner, &mut tokens)?,
+                b'{' => string_literal(&mut scanner, &mut tokens)?,
+                current if is_identifier_start(current) => identifier(&mut scanner, &mut tokens)?,
+                current if char::is_whitespace(current as char) => scanner.next(),
                 current => {
                     return Err(TokenizerError::UnexpectedCharacter {
                         expected: None,
@@ -162,6 +89,99 @@ impl<'a> Scanner<'a> {
             .unwrap()
             .to_string()
     }
+}
+
+fn identifier(scanner: &mut Scanner, tokens: &mut Vec<Token>) -> Result<(), TokenizerError> {
+    let starting_index = scanner.index;
+    scanner.next();
+
+    loop {
+        if scanner.is_end_of_input() || !is_identifier_character(scanner.current()) {
+            break;
+        }
+        scanner.next();
+    }
+
+    tokens.push(Token::Identifier(
+        scanner.substring_until_current(starting_index),
+    ));
+    Ok(())
+}
+
+fn string_literal(scanner: &mut Scanner, tokens: &mut Vec<Token>) -> Result<(), TokenizerError> {
+    scanner.next(); // consume the leading "{"
+    let starting_index = scanner.index;
+    let mut nesting_level = 1_u32;
+
+    loop {
+        if scanner.is_end_of_input() || (nesting_level == 1 && scanner.current() == b'}') {
+            break;
+        }
+        match scanner.current() {
+            b'{' => nesting_level += 1,
+            b'}' => nesting_level -= 1,
+            _ => {}
+        }
+        scanner.next();
+    }
+
+    if scanner.is_end_of_input() {
+        return Err(TokenizerError::UnclosedStringLiteral(
+            scanner.substring_until_current(starting_index),
+        ));
+    }
+
+    let contents = scanner.substring_until_current(starting_index);
+    scanner.next(); // consume closing '}'
+    tokens.push(Token::StringLiteral(contents.trim().to_string()));
+    Ok(())
+}
+
+fn token_literal(scanner: &mut Scanner, tokens: &mut Vec<Token>) -> Result<(), TokenizerError> {
+    scanner.next(); // consume leading '"'
+    let starting_index = scanner.index;
+
+    loop {
+        if scanner.is_end_of_input() || scanner.current() == b'"' {
+            break;
+        }
+        scanner.next();
+    }
+
+    let contents = scanner.substring_until_current(starting_index);
+
+    if contents.contains(|char: char| char.is_ascii_whitespace()) {
+        return Err(TokenizerError::WhitespaceInTokenLiteral(contents));
+    }
+
+    if scanner.is_end_of_input() {
+        return Err(TokenizerError::UnclosedTokenLiteral(contents));
+    }
+
+    scanner.next(); // consume closing '"'
+    tokens.push(Token::TokenLiteral(contents));
+    Ok(())
+}
+
+fn comment(scanner: &mut Scanner) -> Result<(), TokenizerError> {
+    scanner.next();
+    scanner.consume(b'/')?;
+    while !scanner.is_end_of_input() && scanner.current() != b'\n' {
+        scanner.next();
+    }
+    Ok(())
+}
+
+fn arrow(scanner: &mut Scanner, tokens: &mut Vec<Token>) -> Result<(), TokenizerError> {
+    scanner.next();
+    scanner.consume(b'>')?;
+    tokens.push(Token::Arrow);
+    Ok(())
+}
+
+fn consume_into_token(scanner: &mut Scanner, tokens: &mut Vec<Token>, token: Token) {
+    scanner.next();
+    tokens.push(token);
 }
 
 pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, TokenizerError> {
