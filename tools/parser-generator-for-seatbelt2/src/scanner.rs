@@ -1,3 +1,5 @@
+use std::{error::Error, fmt::Display};
+
 #[derive(Debug)]
 pub(crate) enum Token {
     Identifier(String),
@@ -16,6 +18,14 @@ pub(crate) enum TokenizerError {
     UnclosedStringLiteral(String),
     UnclosedTokenLiteral(String),
     WhitespaceInTokenLiteral(String),
+}
+
+impl Error for TokenizerError {}
+
+impl Display for TokenizerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
 }
 
 fn is_identifier_start(character: u8) -> bool {

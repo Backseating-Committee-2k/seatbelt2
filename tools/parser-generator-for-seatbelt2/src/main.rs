@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{error::Error, path::PathBuf};
 
 use clap::Parser;
 
@@ -11,16 +11,10 @@ struct CommandLineArguments {
     destination_filename: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let command_line_arguments = CommandLineArguments::parse();
     let input = std::fs::read_to_string(command_line_arguments.source_filename)
         .expect("unable to read input file");
-    match scanner::tokenize(&input) {
-        Ok(tokens) => {
-            for token in tokens {
-                println!("{token:?}");
-            }
-        }
-        Err(error) => eprintln!("{error:?}"),
-    }
+    let tokens = scanner::tokenize(&input)?;
+    Ok(())
 }
