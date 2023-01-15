@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum Token {
     Identifier(String),
     StringLiteral(String),
@@ -9,6 +9,8 @@ pub(crate) enum Token {
     Pipe,
     Colon,
     Equals,
+    Semicolon,
+    EndOfInput,
 }
 
 #[derive(Debug, Clone)]
@@ -50,6 +52,7 @@ impl<'a> Scanner<'a> {
                 b':' => consume_into_token(&mut scanner, &mut tokens, Token::Colon),
                 b'|' => consume_into_token(&mut scanner, &mut tokens, Token::Pipe),
                 b'=' => consume_into_token(&mut scanner, &mut tokens, Token::Equals),
+                b';' => consume_into_token(&mut scanner, &mut tokens, Token::Semicolon),
                 b'-' => arrow(&mut scanner, &mut tokens)?,
                 b'/' => comment(&mut scanner)?,
                 b'"' => token_literal(&mut scanner, &mut tokens)?,
@@ -64,6 +67,7 @@ impl<'a> Scanner<'a> {
                 }
             }
         }
+        tokens.push(Token::EndOfInput);
         Ok(tokens)
     }
 
