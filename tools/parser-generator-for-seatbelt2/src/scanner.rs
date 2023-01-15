@@ -85,6 +85,8 @@ impl<'a> Scanner<'a> {
                     scanner.next();
                     let starting_index = scanner.index;
                     let mut nesting_level = 1_u32;
+
+                    #[allow(clippy::nonminimal_bool)]
                     while !scanner.is_end_of_input()
                         && !(nesting_level == 1 && scanner.current() == b'}')
                     {
