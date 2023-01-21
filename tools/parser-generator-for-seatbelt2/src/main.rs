@@ -1,6 +1,6 @@
-use std::{error::Error, path::PathBuf};
-
 use crate::parser::GeneratorData;
+use clap::Parser as _;
+use std::{error::Error, path::PathBuf};
 
 mod parser;
 mod scanner;
@@ -13,7 +13,6 @@ struct CommandLineArguments {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    use clap::Parser as _;
     let command_line_arguments = CommandLineArguments::parse();
     let input = std::fs::read_to_string(command_line_arguments.source_filename)
         .expect("unable to read input file");

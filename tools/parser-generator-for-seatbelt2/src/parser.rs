@@ -36,7 +36,7 @@ impl Display for Symbol {
     }
 }
 
-pub(crate) struct Parser<'a> {
+struct Parser<'a> {
     pub(crate) tokens: &'a [Token],
     pub(crate) index: usize,
 }
