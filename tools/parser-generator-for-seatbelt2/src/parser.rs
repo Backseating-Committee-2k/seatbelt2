@@ -11,6 +11,7 @@ pub(crate) enum ParserError {
     EmptyProduction,
     MissingCodeBlock,
     InvalidRuleOrder,
+    ReturnTypeNotApplicableForProxyRules,
 }
 
 impl Error for ParserError {}
@@ -46,6 +47,7 @@ pub(crate) enum RuleRhs {
         symbol: Symbol,
     },
     WithCode {
+        return_type: Option<String>,
         symbols: Vec<(Symbol, Option<String>)>,
         code: String,
     },
@@ -55,12 +57,17 @@ impl Display for RuleRhs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RuleRhs::Proxy { symbol } => write!(f, "{symbol}"),
-            RuleRhs::WithCode { symbols, code } => symbols
+            RuleRhs::WithCode {
+                return_type,
+                symbols,
+                code,
+            } => symbols
                 .iter()
                 .fold(Ok(()), |result, symbol| {
                     result.and_then(|_| write!(f, "{}", symbol.0))
                 })
-                .and_then(|_| write!(f, " {:?}", code)),
+                .and_then(|_| write!(f, " {:?}", code))
+                .and_then(|_| write!(f, " -> {:?}", return_type)),
         }
     }
 }
@@ -85,7 +92,10 @@ macro_rules! consume {
 impl Parser<'_> {
     pub(crate) fn parse(&mut self) -> Result<GeneratorData, ParserError> {
         let constants = self.parse_constants()?;
-        let rulesets = self.parse_rulesets()?;
+        let default_return_type = constants
+            .get(Self::DEFAULT_RETURN_TYPE)
+            .map(|string| string.as_str());
+        let rulesets = self.parse_rulesets(default_return_type)?;
         Ok(GeneratorData {
             constants,
             rulesets,
@@ -110,15 +120,22 @@ impl Parser<'_> {
         Ok(constants)
     }
 
-    pub(crate) fn parse_rulesets(&mut self) -> Result<HashMap<String, Ruleset>, ParserError> {
+    pub(crate) fn parse_rulesets(
+        &mut self,
+        default_return_type: Option<&str>,
+    ) -> Result<HashMap<String, Ruleset>, ParserError> {
         let mut rulesets = HashMap::new();
         let mut current_lhs = None;
-        while let (Token::Identifier(identifier), Some(Token::Arrow)) =
-            (self.current(), self.peek())
-        {
+        while let Token::Identifier(identifier) = self.current() {
             let identifier = identifier.clone();
             self.next(); // consume identifier
-            self.next(); // consume arrow
+            let return_type = if let Token::StringLiteral(return_type) = self.current_cloned() {
+                self.next(); // consume return type
+                Some(return_type)
+            } else {
+                None
+            };
+            consume!(Token::Arrow, self)?;
 
             if let Some(current_lhs) = &current_lhs {
                 if current_lhs != &identifier && rulesets.contains_key(&identifier) {
@@ -133,6 +150,9 @@ impl Parser<'_> {
             if let (Token::Identifier(non_terminal), Some(Token::Semicolon)) =
                 (self.current(), self.peek())
             {
+                if return_type.is_some() {
+                    return Err(ParserError::ReturnTypeNotApplicableForProxyRules);
+                }
                 let non_terminal = non_terminal.clone();
                 self.next(); // consume non-terminal
                 self.next(); // consume ';'
@@ -149,8 +169,10 @@ impl Parser<'_> {
                 unreachable!();
             };
             consume!(Token::Semicolon, self)?;
+            let return_type = return_type.or_else(|| default_return_type.map(str::to_string));
             for rule in current_rules {
                 entry.push(RuleRhs::WithCode {
+                    return_type: return_type.clone(),
                     symbols: rule,
                     code: code_block.clone(),
                 });
@@ -245,8 +267,11 @@ impl Parser<'_> {
         }
     }
 
+    pub(crate) const DEFAULT_RETURN_TYPE: &'static str = "DEFAULT_RETURN_TYPE";
+    pub(crate) const GLOBAL_CODE: &'static str = "GLOBAL_CODE";
+
     pub(crate) fn is_valid_constant_name(name: &str) -> bool {
-        ["DEFAULT_RETURN_VALUE", "GLOBAL_CODE"].contains(&name)
+        [Self::DEFAULT_RETURN_TYPE, Self::GLOBAL_CODE].contains(&name)
     }
 }
 
