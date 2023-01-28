@@ -34,6 +34,10 @@ public:
         return m_lexeme;
     }
 
+    [[nodiscard]] auto ascii_lexeme() const {
+        return utils::to_string_view(lexeme());
+    }
+
     [[nodiscard]] usize line_number() const {
         assert(std::greater_equal{}(m_lexeme.data(), m_source_code.data()));
         assert(std::less_equal{}(m_lexeme.data() + m_lexeme.length(), m_source_code.data() + m_source_code.length()));
