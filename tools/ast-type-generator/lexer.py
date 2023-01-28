@@ -6,15 +6,17 @@ class LexerError(Exception):
 
 
 class TokenType(Enum):
-    Type = 0
-    Identifier = 1
-    StringLiteral = 2
-    Equals = 3
-    LeftParenthesis = 4
-    RightParenthesis = 5
-    Pipe = 6
-    ByMove = 7
-    EndOfInput = 8
+    TYPE = 0
+    IDENTIFIER = 1
+    STRING_LITERAL = 2
+    EQUALS = 3
+    LEFT_PARENTHESIS = 4
+    RIGHT_PARENTHESIS = 5
+    PIPE = 6
+    BY_MOVE = 7
+    FUNCTION = 8
+    IMPLEMENT = 9
+    END_OF_INPUT = 10
 
 
 class Token:
@@ -22,7 +24,7 @@ class Token:
         self.lexeme = lexeme
         self.type_ = type_
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.type_}(\"{self.lexeme}\")"
 
 
@@ -32,16 +34,16 @@ def tokenize(input_: str) -> list[Token]:
     while not lexer.is_end_of_input():
         match lexer.current():
             case "(":
-                tokens.append(Token(lexer.current(), TokenType.LeftParenthesis))
+                tokens.append(Token(lexer.current(), TokenType.LEFT_PARENTHESIS))
                 lexer.next()
             case ")":
-                tokens.append(Token(lexer.current(), TokenType.RightParenthesis))
+                tokens.append(Token(lexer.current(), TokenType.RIGHT_PARENTHESIS))
                 lexer.next()
             case "=":
-                tokens.append(Token(lexer.current(), TokenType.Equals))
+                tokens.append(Token(lexer.current(), TokenType.EQUALS))
                 lexer.next()
             case "|":
-                tokens.append(Token(lexer.current(), TokenType.Pipe))
+                tokens.append(Token(lexer.current(), TokenType.PIPE))
                 lexer.next()
             case "{":
                 tokens.append(string_literal(lexer))
@@ -54,7 +56,7 @@ def tokenize(input_: str) -> list[Token]:
                     tokens.append(identifier_or_keyword(lexer))
                 else:
                     raise LexerError(f"unexpected input \"{lexer.current()}\"")
-    tokens.append(Token("", TokenType.EndOfInput))
+    tokens.append(Token("", TokenType.END_OF_INPUT))
     return tokens
 
 
@@ -81,11 +83,17 @@ def identifier_or_keyword(lexer: "Lexer") -> Token:
     while not lexer.is_end_of_input() and is_valid_identifier_char(lexer.current()):
         lexer.next()
     contents = lexer.input_[starting_index:lexer.index]
-    if contents == "by_move":
-        return Token(contents, TokenType.ByMove)
-    if contents == "type":
-        return Token(contents, TokenType.Type)
-    return Token(contents, TokenType.Identifier)
+
+    keywords = {
+        "by_move": TokenType.BY_MOVE,
+        "type": TokenType.TYPE,
+        "function": TokenType.FUNCTION,
+        "implement": TokenType.IMPLEMENT,
+    }
+
+    if contents not in keywords:
+        return Token(contents, TokenType.IDENTIFIER)
+    return Token(contents, keywords[contents])
 
 
 def string_literal(lexer: "Lexer") -> Token:
@@ -104,7 +112,7 @@ def string_literal(lexer: "Lexer") -> Token:
     assert lexer.current() == "}"
     lexer.next()  # consume "}"
     contents = lexer.input_[starting_index:lexer.index]
-    return Token(contents, TokenType.StringLiteral)
+    return Token(contents, TokenType.STRING_LITERAL)
 
 
 class Lexer:
