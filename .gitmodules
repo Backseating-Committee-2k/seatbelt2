@@ -1,0 +1,3 @@
+[submodule "tools/ast-node-generator-for-seatbelt2"]
+	path = tools/ast-node-generator-for-seatbelt2
+	url = git@github.com:Backseating-Committee-2k/ast-node-generator-for-seatbelt2.git

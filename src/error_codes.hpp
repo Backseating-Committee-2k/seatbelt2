@@ -6,5 +6,6 @@ enum class ErrorCode {
     MissingNewlineAtEndOfSourceCode,
     UnterminatedComment,
     // parser errors
+    UnexpectedToken,
     // type errors
 };
