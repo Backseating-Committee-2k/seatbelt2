@@ -1,0 +1,23 @@
+import std:: terminal;
+import std .      terminal
+::
+console;
+import std   ::   public dfghdfhf class::cola;
+
+//function add{LeftType, RightType}(lhs: LeftType, rhs: RightType) ~> Auto {
+//    // todo
+//}
+//
+//function f(n: U32) {
+//    // do nothing
+//
+//    function g() { /* do nothing */ }
+//}
+//
+//function f() {
+//    // do nothing
+//}
+//
+//function main() {
+//
+//}

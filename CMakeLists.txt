@@ -29,7 +29,16 @@ set(TARGET_LIST Seatbelt2)
 
 add_executable(Seatbelt2
         src/main.cpp
-        src/tokens.hpp src/types.hpp src/lexer.cpp src/lexer.hpp src/source_location.hpp src/error_codes.hpp src/utils.cpp src/utils.hpp)
+        src/tokens.hpp
+        src/types.hpp
+        src/lexer.cpp
+        src/lexer.hpp
+        src/source_location.hpp
+        src/error_codes.hpp
+        src/utils.cpp
+        src/utils.hpp
+        src/parser_nodes/parser_nodes.hpp
+        src/parser_nodes/parser_nodes.cpp src/parser.cpp src/parser.hpp)
 
 foreach (target ${TARGET_LIST})
     target_link_libraries(${target} PRIVATE cxxopts::cxxopts)
