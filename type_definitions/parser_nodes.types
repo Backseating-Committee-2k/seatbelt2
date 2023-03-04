@@ -1,0 +1,139 @@
+// prelude
+{
+#include "../error_codes.hpp"
+#include "../lexer.hpp"
+#include "../utils.hpp"
+#include <cassert>
+#include <fmt/format.h>
+#include <memory>
+#include <tl/expected.hpp>
+#include <tl/optional.hpp>
+#include <vector>
+}
+
+type Name {
+    explicit Name(std::vector<Token> tokens) : tokens{ std::move(tokens) } { }
+
+    std::vector<Token> tokens;
+
+    [[nodiscard]] std::string to_string() const {
+        auto result = std::string{};
+        for (const auto& token : tokens) {
+            result = fmt::format("{}{}", result, token.location.ascii_lexeme());
+        }
+        return result;
+    }
+}
+
+type ReturnType {
+    ReturnType(Token tilde_arrow, Name type) : tilde_arrow{tilde_arrow}, type{std::move(type)} { }
+
+    Token tilde_arrow;
+    Name type;
+}
+
+type TypeParameterList {
+    TypeParameterList(Token left_curly_brace,
+                      std::vector<Token> identifiers,
+                      Token right_curly_brace)
+    : left_curly_brace{ left_curly_brace }
+    , identifiers{ std::move(identifiers) }
+    , right_curly_brace{ right_curly_brace }
+    { }
+
+    Token left_curly_brace;
+    std::vector<Token> identifiers;
+    Token right_curly_brace;
+}
+
+type Parameter {
+    Parameter(Token identifier, Name type) : identifier{ identifier }, type{ std::move(type) } { }
+
+    Token identifier;
+    Name type;
+}
+
+type ParameterList {
+    explicit ParameterList(std::vector<Parameter> parameters) : parameters{ std::move(parameters) } { }
+
+    std::vector<Parameter> parameters;
+}
+
+type ImportStatement {
+    ImportStatement(Token import_token, Name module_name, Token semicolon_token)
+    : import_token{ import_token }, module_name{ std::move(module_name) }, semicolon_token{ semicolon_token }
+    { }
+
+    Token import_token;
+    Name module_name;
+    Token semicolon_token;
+
+    [[nodiscard]] std::string to_string() const {
+        return fmt::format("import {};", module_name.to_string());
+    }
+}
+
+type Program {
+    Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Definition>> definitions);
+
+    std::vector<ImportStatement> imports;
+    std::vector<std::unique_ptr<Definition>> definitions;
+
+    [[nodiscard]] std::string to_string() const;
+}
+
+Definition(
+    function to_string {std::string}
+) = FunctionDefinition(
+       function_keyword {Token}
+       identifier {Token}
+       type_parameters by_move {tl::optional<TypeParameterList>}
+       left_parenthesis {Token}
+       parameters by_move {tl::optional<ParameterList>}
+       right_parenthesis {Token}
+       return_type by_move {tl::optional<ReturnType>}
+       body by_move {std::unique_ptr<Block>}
+
+       implement to_string {
+           return "todo";
+       }
+   )
+
+Expression(
+    function to_string {std::string}
+) =
+    Block(
+        // todo
+        left_curly_brace {Token}
+        right_curly_brace {Token}
+
+        implement to_string {
+            return "{}";
+        }
+    )
+
+// postlude
+{
+
+inline Program::Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Definition>> definitions)
+    : imports{ std::move(imports) },
+      definitions{ std::move(definitions) } { }
+
+[[nodiscard]] inline std::string Program::to_string() const {
+    auto result = std::string{};
+    for (const auto& import_ : imports) {
+        result += fmt::format("{}\n", import_.to_string());
+    }
+    if (not imports.empty()) {
+        result += '\n';
+    }
+    for (const auto& definition : definitions) {
+        result += fmt::format("{}\n", definition->to_string());
+    }
+    if (not definitions.empty()) {
+        result += '\n';
+    }
+    return result;
+}
+
+}
