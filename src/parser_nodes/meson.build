@@ -5,7 +5,7 @@ prog_python = find_program('python3', 'python', required: true)
 
 # generate and regenerate the 'parser_nodes.(c|h)pp' files dynamically
 src_files += custom_target(
-    'parser_nodes_generator',
+    'parser_nodes',
     output: ['parser_nodes.cpp', 'parser_nodes.hpp'],
     input: [
         meson.global_source_root() + '/tools/ast-node-generator-for-seatbelt2/main.py',

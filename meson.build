@@ -43,8 +43,19 @@ if not vcpkg_prog.found()
         check: true,
     )
 
+    vcpkg_script_extension = 'sh'
+
+    if build_machine.system() == 'windows'
+        vcpkg_script_extension = 'bat'
+    elif build_machine.system() == 'linux'
+        vcpkg_script_extension = 'sh'
+    else
+        error('Not supported system: ' + build_machine.system())
+    endif
+
+
     run_command(
-        meson.current_source_dir() + '/vcpkg/bootstrap-vcpkg.sh',
+        meson.current_source_dir() + '/vcpkg/bootstrap-vcpkg.' + vcpkg_script_extension,
         check: true,
     )
 
@@ -55,62 +66,85 @@ if not vcpkg_prog.found()
     )
 endif
 
+arch = build_machine.cpu_family()
+
+
+if arch == 'x86_64'
+    arch = 'x64'
+elif arch == 'x86'
+    arch = 'x86'
+else
+    error('Not supported cpu_family: ' + arch)
+endif
+
+
+vcpkg_buildtype = 'release'
+
+
+if (
+    get_option('buildtype') == 'debug'
+    or get_option('buildtype') == 'debugoptimized'
+)
+    vcpkg_buildtype = 'debug'
+endif
+
+vpkg_triplet = arch + '-' + build_machine.system() + '-' + vcpkg_buildtype
+
 run_command(
     vcpkg_prog,
     'install',
     '--x-wait-for-lock',
     '--x-manifest-root=' + meson.current_source_dir(),
+    '--triplet=' + vpkg_triplet,
+    '--host-triplet=' + vpkg_triplet,
     check: true,
 )
 
-vkpkg_includes = include_directories('./vcpkg_installed/x64-linux/include')
 
-declare_dependency(
-    include_directories: './vcpkg_installed/x64-linux',
+installed_libs = []
+
+if build_machine.system() == 'windows'
+    prog_python = find_program('python3', 'python', required: true)
+    installed_libs = run_command(
+        prog_python,
+        'tools/grabber.py',
+        './vcpkg_installed/' + vpkg_triplet + '/lib',
+        'dll',
+        check: true,
+    ).stdout().strip().split('\n')
+elif build_machine.system() == 'linux'
+    installed_libs = run_command(
+        'tools/grabber.sh',
+        './vcpkg_installed/' + vpkg_triplet + '/lib',
+        'a',
+        check: true,
+    ).stdout().strip().split('\n')
+else
+    error('Not supported system: ' + build_machine.system())
+endif
+
+
+vcpkg_libs = []
+
+cpp = meson.get_compiler('cpp')
+
+foreach dep : installed_libs
+    vcpkg_libs += cpp.find_library(
+        dep,
+        dirs: meson.current_source_dir() + '/vcpkg_installed/' + vpkg_triplet + '/lib',
+        required: true,
+    )
+endforeach
+
+
+deps = declare_dependency(
+    include_directories: include_directories(
+        './vcpkg_installed/' + vpkg_triplet + '/include',
+    ),
+    dependencies: vcpkg_libs,
 )
 
-deps = []
-
-ctre_dep = dependency('ctre', required: false)
-if not ctre_dep.found()
-    # deps += dependency('ctre', required: true, method: 'pkg-config')
-else
-    deps += ctre_dep
-endif
-
-utf8proc_dep = dependency('utf8proc', required: false)
-if not utf8proc_dep.found()
-    deps += dependency(
-        'libutf8proc',
-        required: true,
-        fallback: 'utf8proc',
-    )
-else
-    deps += utf8proc_dep
-endif
-
-deps += dependency('magic_enum', required: true, fallback: 'magic_enum')
-
-microsoft_gsl_dep = dependency('Microsoft.GSL', required: false)
-if not microsoft_gsl_dep.found()
-    # deps += dependency(
-    #     'Microsoft.GSL',
-    #     required: true,
-    #     fallback: 'Microsoft.GSL',
-    # )
-else
-    deps += microsoft_gsl_dep
-endif
-
-deps += dependency('tl-expected', required: true, fallback: 'tl-expected')
-deps += dependency('tl-optional', required: true, fallback: 'tl-optional')
-deps += dependency('cxxopts', required: true, fallback: 'cxxopts')
-deps += dependency('fmt', required: true, fallback: 'fmt')
-deps += dependency('range-v3', required: true, fallback: 'range-v3')
-
-
 inc_dirs = []
-
 
 subdir('src')
 
@@ -118,7 +152,7 @@ executable(
     'Seatbelt2',
     src_files,
     link_with: [],
-    include_directories: inc_dirs + vkpkg_includes,
+    include_directories: inc_dirs,
     dependencies: deps,
     override_options: [
         'warning_level=3',
