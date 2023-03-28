@@ -23,6 +23,8 @@ endif
 
 deps = []
 inc_dirs = []
+link_deps = []
+src_files = []
 
 subdir('tools')
 subdir('src')
@@ -30,7 +32,7 @@ subdir('src')
 executable(
     'Seatbelt2',
     src_files,
-    link_with: [],
+    link_with: link_deps,
     include_directories: inc_dirs,
     dependencies: deps,
     override_options: [

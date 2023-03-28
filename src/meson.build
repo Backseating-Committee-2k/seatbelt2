@@ -1,7 +1,7 @@
-src_files = files(
-    'parser.cpp',
+src_files += files(
     'lexer.cpp',
     'main.cpp',
+    'parser.cpp',
     'utils.cpp',
 )
 
