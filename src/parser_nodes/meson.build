@@ -3,15 +3,6 @@
 # prog_python = pymodule.find_installation('python3', required: true)
 prog_python = find_program('python3', 'python', required: true)
 
-env = environment()
-
-if build_machine.system() == 'windows'
-    env.append(
-        'PYTHONPATH',
-        meson.global_source_root() + '\\tools\\ast-node-generator-for-seatbelt2',
-    )
-endif
-
 # generate and regenerate the 'parser_nodes.(c|h)pp' files dynamically
 # this generates the files into the built dir, where they are needed to built the project
 parser_nodes = custom_target(
@@ -31,7 +22,6 @@ parser_nodes = custom_target(
         '@OUTDIR@/parser_nodes',
         'parser_nodes',
     ],
-    env: env,
 )
 
 src_files += parser_nodes
@@ -47,7 +37,6 @@ run_target(
         meson.current_source_dir() + '/parser_nodes',
         'parser_nodes',
     ],
-    env: env,
 )
 
 

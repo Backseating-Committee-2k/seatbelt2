@@ -49,8 +49,8 @@ jobs:
             - name: Set Environment - Linux
               if: matrix.config.os == 'ubuntu-22.04'
               run: |
-                export CXX=g++-12
-                export CC=gcc-12
+                  export CXX=g++-12
+                  export CC=gcc-12
 
             - name: Configure
               run: meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
