@@ -8,6 +8,7 @@ src_files += custom_target(
     'parser_nodes',
     output: ['parser_nodes.cpp', 'parser_nodes.hpp'],
     input: [
+        ## this is an input and not as nmormal strin g below, since chnage sin here should trigger an automatic rebuilt!
         meson.global_source_root() + '/tools/ast-node-generator-for-seatbelt2/main.py',
         meson.global_source_root() + '/tools/ast-node-generator-for-seatbelt2/parser_nodes.types',
     ],
