@@ -14,7 +14,7 @@ project(
 
 cpp = meson.get_compiler('cpp')
 if cpp.get_id() == 'msvc'
-    add_project_arguments('-std=c++latest', language: 'cpp')
+    add_project_arguments('/std:c++latest', language: 'cpp')
 elif cpp.get_id() == 'gcc'
     add_project_arguments('-std=c++23', language: 'cpp')
 else

@@ -69,4 +69,4 @@ jobs:
               if: matrix.config.os == 'windows-latest'
               with:
                   name: ${{ matrix.config.name }} Executable
-                  path: build/oopetris.exe
+                  path: build/Seatbelt2.exe

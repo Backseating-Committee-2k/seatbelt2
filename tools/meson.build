@@ -85,12 +85,12 @@ run_command(
 )
 
 
-library_extension = 'a'
+library_extension = ['a']
 
 if build_machine.system() == 'windows'
-    library_extension = 'dll'
+    library_extension = ['dll', 'lib']
 elif build_machine.system() == 'linux'
-    library_extension = 'a'
+    library_extension = ['a', 'so']
 else
     error('Not supported system: ' + build_machine.system())
 endif
@@ -103,7 +103,6 @@ installed_libs = run_command(
     library_extension,
     check: true,
 ).stdout().strip().split('\n')
-
 
 vcpkg_libs = []
 
