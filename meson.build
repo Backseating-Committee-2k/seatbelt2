@@ -88,40 +88,37 @@ if (
     vcpkg_buildtype = 'debug'
 endif
 
-vpkg_triplet = arch + '-' + build_machine.system() + '-' + vcpkg_buildtype
+vcpkg_triplet = arch + '-' + build_machine.system() + '-' + vcpkg_buildtype
 
 run_command(
     vcpkg_prog,
     'install',
     '--x-wait-for-lock',
     '--x-manifest-root=' + meson.current_source_dir(),
-    '--triplet=' + vpkg_triplet,
-    '--host-triplet=' + vpkg_triplet,
+    '--triplet=' + vcpkg_triplet,
+    '--host-triplet=' + vcpkg_triplet,
     check: true,
 )
 
 
-installed_libs = []
+library_extension = 'a'
 
 if build_machine.system() == 'windows'
-    prog_python = find_program('python3', 'python', required: true)
-    installed_libs = run_command(
-        prog_python,
-        'tools/grabber.py',
-        './vcpkg_installed/' + vpkg_triplet + '/lib',
-        'dll',
-        check: true,
-    ).stdout().strip().split('\n')
+    library_extension = 'dll'
 elif build_machine.system() == 'linux'
-    installed_libs = run_command(
-        'tools/grabber.sh',
-        './vcpkg_installed/' + vpkg_triplet + '/lib',
-        'a',
-        check: true,
-    ).stdout().strip().split('\n')
+    library_extension = 'a'
 else
     error('Not supported system: ' + build_machine.system())
 endif
+
+prog_python = find_program('python3', 'python', required: true)
+installed_libs = run_command(
+    prog_python,
+    'tools/grabber.py',
+    './vcpkg_installed/' + vcpkg_triplet + '/lib',
+    library_extension,
+    check: true,
+).stdout().strip().split('\n')
 
 
 vcpkg_libs = []
@@ -131,7 +128,8 @@ cpp = meson.get_compiler('cpp')
 foreach dep : installed_libs
     vcpkg_libs += cpp.find_library(
         dep,
-        dirs: meson.current_source_dir() + '/vcpkg_installed/' + vpkg_triplet + '/lib',
+        dirs: meson.current_source_dir() + '/vcpkg_installed/' + vcpkg_triplet +
+        '/lib',
         required: true,
     )
 endforeach
@@ -139,7 +137,7 @@ endforeach
 
 deps = declare_dependency(
     include_directories: include_directories(
-        './vcpkg_installed/' + vpkg_triplet + '/include',
+        './vcpkg_installed/' + vcpkg_triplet + '/include',
     ),
     dependencies: vcpkg_libs,
 )
