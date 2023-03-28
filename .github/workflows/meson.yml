@@ -52,6 +52,10 @@ jobs:
                   export CXX=g++-12
                   export CC=gcc-12
 
+            - uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+
             - name: Configure
               run: meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
 
