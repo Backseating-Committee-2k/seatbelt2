@@ -45,7 +45,9 @@ jobs:
       - name: Generate parser_nodes
         shell: bash
         run: |
-          python ./tools/ast-node-generator-for-seatbelt2/main.py ./tools/ast-node-generator-for-seatbelt2/parser_nodes.types ./src/parser_nodes/parser_nodes parser_nodes
+          cd ./src/parser_nodes/
+          python ../../tools/ast-node-generator-for-seatbelt2/main.py ../../tools/ast-node-generator-for-seatbelt2/parser_nodes.types parser_nodes parser_nodes
+          cd ../..
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
