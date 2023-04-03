@@ -21,12 +21,31 @@ else
     add_project_arguments('-std=c++20', language: 'cpp')
 endif
 
+subdir('tools')
+
 deps = []
+
+deps += dependency('cxxopts', required: true) ## this is a header only lib
+deps += dependency('fmt', required: true, fallback: ['libfmt', 'fmt_dep'])
+deps += dependency('range-v3', required: true) ## this is a header only lib
+deps += dependency('tl-expected', required: true) ## this is a header only lib
+deps += dependency('tl-optional', required: true) ## this is a header only lib
+deps += dependency('magic-enum', required: true) ## this is a header only lib
+deps += dependency('ctre', required: true) ## this is a header only lib
+deps += dependency('ms-gsl', required: true) ## this is a header only lib
+deps += dependency(
+    'utf8proc',
+    required: true,
+    fallback: ['libutf8proc', 'utf8proc_dep'],
+)
+
+
+
 inc_dirs = []
 link_deps = []
 src_files = []
 
-subdir('tools')
+
 subdir('src')
 
 executable(
