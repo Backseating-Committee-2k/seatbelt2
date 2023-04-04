@@ -46,18 +46,17 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install ninja-build build-essential git gcc-12 g++-12
 
-            - name: Set Environment - Linux
-              if: matrix.config.os == 'ubuntu-22.04'
-              run: |
-                  export CXX=g++-12
-                  export CC=gcc-12
-
             - uses: actions/setup-python@v4
               with:
                   python-version: "3.11"
 
-            - name: Configure
+            - name: Configure (Windows)
+              if: matrix.config.os == 'windows-latest'
               run: meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
+              
+            - name: Configure (Linux)
+              if: matrix.config.os == 'ubuntu-22.04'
+              run: CXX=g++-12 CC=gcc-12 meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
 
             - name: Build
               run: meson compile -C build
