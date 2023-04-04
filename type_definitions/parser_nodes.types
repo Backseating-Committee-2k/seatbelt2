@@ -54,9 +54,11 @@ type Parameter {
 }
 
 type ParameterList {
-    explicit ParameterList(std::vector<Parameter> parameters) : parameters{ std::move(parameters) } { }
+    ParameterList(Token left_parenthesis, std::vector<Parameter> parameters, Token right_parenthesis) : left_parenthesis{ left_parenthesis }, parameters{ std::move(parameters) }, right_parenthesis{ right_parenthesis } { }
 
+    Token left_parenthesis;
     std::vector<Parameter> parameters;
+    Token right_parenthesis;
 }
 
 type ImportStatement {
@@ -74,37 +76,20 @@ type ImportStatement {
 }
 
 type Program {
-    Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Definition>> definitions);
+    Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Statement>> statements);
 
     std::vector<ImportStatement> imports;
-    std::vector<std::unique_ptr<Definition>> definitions;
+    std::vector<std::unique_ptr<Statement>> statements;
 
     [[nodiscard]] std::string to_string() const;
 }
-
-Definition(
-    function to_string {std::string}
-) = FunctionDefinition(
-       function_keyword {Token}
-       identifier {Token}
-       type_parameters by_move {tl::optional<TypeParameterList>}
-       left_parenthesis {Token}
-       parameters by_move {tl::optional<ParameterList>}
-       right_parenthesis {Token}
-       return_type by_move {tl::optional<ReturnType>}
-       body by_move {std::unique_ptr<Block>}
-
-       implement to_string {
-           return "todo";
-       }
-   )
 
 Expression(
     function to_string {std::string}
 ) =
     Block(
-        // todo
         left_curly_brace {Token}
+        statements by_move {std::vector<std::unique_ptr<Statement>>}
         right_curly_brace {Token}
 
         implement to_string {
@@ -112,12 +97,28 @@ Expression(
         }
     )
 
+Statement(
+    function to_string {std::string}
+) = FunctionDefinition(
+       export_token { tl::optional<Token> }
+       function_keyword {Token}
+       identifier {Token}
+       type_parameters by_move {tl::optional<TypeParameterList>}
+       parameters by_move {ParameterList}
+       return_type by_move {tl::optional<ReturnType>}
+       body by_move {Block}
+
+       implement to_string {
+           return "todo";
+       }
+   )
+
 // postlude
 {
 
-inline Program::Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Definition>> definitions)
+inline Program::Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Statement>> statements)
     : imports{ std::move(imports) },
-      definitions{ std::move(definitions) } { }
+      statements{ std::move(statements) } { }
 
 [[nodiscard]] inline std::string Program::to_string() const {
     auto result = std::string{};
@@ -127,10 +128,10 @@ inline Program::Program(std::vector<ImportStatement> imports, std::vector<std::u
     if (not imports.empty()) {
         result += '\n';
     }
-    for (const auto& definition : definitions) {
-        result += fmt::format("{}\n", definition->to_string());
+    for (const auto& statement : statements) {
+        result += fmt::format("{}\n", statement->to_string());
     }
-    if (not definitions.empty()) {
+    if (not statements.empty()) {
         result += '\n';
     }
     return result;
