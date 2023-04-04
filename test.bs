@@ -1,23 +1,21 @@
-import std:: terminal;
-import std .      terminal
-::
-console;
-import std   ::   public dfghdfhf class::cola;
+import std::terminal;
 
-//function add{LeftType, RightType}(lhs: LeftType, rhs: RightType) ~> Auto {
-//    // todo
-//}
-//
-//function f(n: U32) {
-//    // do nothing
-//
-//    function g() { /* do nothing */ }
-//}
-//
-//function f() {
-//    // do nothing
-//}
-//
-//function main() {
-//
-//}
+export function add{LeftType, RightType}(lhs: LeftType, rhs: RightType) ~> Deduced {
+
+}
+
+function f(n: U32) {
+    export function g() {
+        //import std::vector;
+    }
+}
+
+//import std::utility;
+
+function f() {
+    //export import raylib;
+}
+
+function main() {
+
+}

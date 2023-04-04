@@ -1,0 +1,140 @@
+// prelude
+{
+#include "../error_codes.hpp"
+#include "../lexer.hpp"
+#include "../utils.hpp"
+#include <cassert>
+#include <fmt/format.h>
+#include <memory>
+#include <tl/expected.hpp>
+#include <tl/optional.hpp>
+#include <vector>
+}
+
+type Name {
+    explicit Name(std::vector<Token> tokens) : tokens{ std::move(tokens) } { }
+
+    std::vector<Token> tokens;
+
+    [[nodiscard]] std::string to_string() const {
+        auto result = std::string{};
+        for (const auto& token : tokens) {
+            result = fmt::format("{}{}", result, token.location.ascii_lexeme());
+        }
+        return result;
+    }
+}
+
+type ReturnType {
+    ReturnType(Token tilde_arrow, Name type) : tilde_arrow{tilde_arrow}, type{std::move(type)} { }
+
+    Token tilde_arrow;
+    Name type;
+}
+
+type TypeParameterList {
+    TypeParameterList(Token left_curly_brace,
+                      std::vector<Token> identifiers,
+                      Token right_curly_brace)
+    : left_curly_brace{ left_curly_brace }
+    , identifiers{ std::move(identifiers) }
+    , right_curly_brace{ right_curly_brace }
+    { }
+
+    Token left_curly_brace;
+    std::vector<Token> identifiers;
+    Token right_curly_brace;
+}
+
+type Parameter {
+    Parameter(Token identifier, Name type) : identifier{ identifier }, type{ std::move(type) } { }
+
+    Token identifier;
+    Name type;
+}
+
+type ParameterList {
+    ParameterList(Token left_parenthesis, std::vector<Parameter> parameters, Token right_parenthesis) : left_parenthesis{ left_parenthesis }, parameters{ std::move(parameters) }, right_parenthesis{ right_parenthesis } { }
+
+    Token left_parenthesis;
+    std::vector<Parameter> parameters;
+    Token right_parenthesis;
+}
+
+type ImportStatement {
+    ImportStatement(Token import_token, Name module_name, Token semicolon_token)
+    : import_token{ import_token }, module_name{ std::move(module_name) }, semicolon_token{ semicolon_token }
+    { }
+
+    Token import_token;
+    Name module_name;
+    Token semicolon_token;
+
+    [[nodiscard]] std::string to_string() const {
+        return fmt::format("import {};", module_name.to_string());
+    }
+}
+
+type Program {
+    Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Statement>> statements);
+
+    std::vector<ImportStatement> imports;
+    std::vector<std::unique_ptr<Statement>> statements;
+
+    [[nodiscard]] std::string to_string() const;
+}
+
+Expression(
+    function to_string {std::string}
+) =
+    Block(
+        left_curly_brace {Token}
+        statements by_move {std::vector<std::unique_ptr<Statement>>}
+        right_curly_brace {Token}
+
+        implement to_string {
+            return "{}";
+        }
+    )
+
+Statement(
+    function to_string {std::string}
+) = FunctionDefinition(
+       export_token { tl::optional<Token> }
+       function_keyword {Token}
+       identifier {Token}
+       type_parameters by_move {tl::optional<TypeParameterList>}
+       parameters by_move {ParameterList}
+       return_type by_move {tl::optional<ReturnType>}
+       body by_move {Block}
+
+       implement to_string {
+           return "todo";
+       }
+   )
+
+// postlude
+{
+
+inline Program::Program(std::vector<ImportStatement> imports, std::vector<std::unique_ptr<Statement>> statements)
+    : imports{ std::move(imports) },
+      statements{ std::move(statements) } { }
+
+[[nodiscard]] inline std::string Program::to_string() const {
+    auto result = std::string{};
+    for (const auto& import_ : imports) {
+        result += fmt::format("{}\n", import_.to_string());
+    }
+    if (not imports.empty()) {
+        result += '\n';
+    }
+    for (const auto& statement : statements) {
+        result += fmt::format("{}\n", statement->to_string());
+    }
+    if (not statements.empty()) {
+        result += '\n';
+    }
+    return result;
+}
+
+}

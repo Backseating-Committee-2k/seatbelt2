@@ -24,6 +24,19 @@ find_package(unofficial-utf8proc CONFIG REQUIRED)
 find_package(cxxopts CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(range-v3 CONFIG REQUIRED)
+set(AST_NODE_GENERATOR_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/ast-node-generator-for-seatbelt2/main.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/ast-node-generator-for-seatbelt2/emitter.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/ast-node-generator-for-seatbelt2/lexer.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/ast-node-generator-for-seatbelt2/parser.py
+    )
+
+add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/parser_nodes/parser_nodes.hpp ${CMAKE_CURRENT_SOURCE_DIR}/src/parser_nodes/parser_nodes.cpp
+        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/tools/ast-node-generator-for-seatbelt2/main.py ${CMAKE_CURRENT_SOURCE_DIR}/type_definitions/parser_nodes.types ${CMAKE_CURRENT_SOURCE_DIR}/src/parser_nodes/parser_nodes parser_nodes
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/type_definitions/parser_nodes.types ${AST_NODE_GENERATOR_FILES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 set(TARGET_LIST Seatbelt2)
 
@@ -37,8 +50,11 @@ add_executable(Seatbelt2
         src/error_codes.hpp
         src/utils.cpp
         src/utils.hpp
+        src/parser.cpp
+        src/parser.hpp
         src/parser_nodes/parser_nodes.hpp
-        src/parser_nodes/parser_nodes.cpp src/parser.cpp src/parser.hpp)
+        src/parser_nodes/parser_nodes.cpp
+        )
 
 foreach (target ${TARGET_LIST})
     target_link_libraries(${target} PRIVATE cxxopts::cxxopts)
