@@ -22,6 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        fetch-depth: 0
+        submodules: "recursive"
 
       - name: Install GCC12
         shell: bash
