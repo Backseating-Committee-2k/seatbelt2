@@ -124,10 +124,10 @@ private:
 
     [[nodiscard]] std::unique_ptr<Statement> function([[maybe_unused]] tl::optional<Token> export_token) {
         assert(current().type == TokenType::Function);
-        const auto [function_token, identifier_token] = consume<TokenType::Function, TokenType::Identifier>();
-        auto type_parameter_list = this->type_parameter_list();
-        auto parameter_list = this->type_parameter_list();
-        auto return_type = this->return_type();
+        [[maybe_unused]] const auto [function_token, identifier_token] = consume<TokenType::Function, TokenType::Identifier>();
+        [[maybe_unused]] auto type_parameter_list = this->type_parameter_list();
+        [[maybe_unused]] auto parameter_list = this->type_parameter_list();
+        [[maybe_unused]] auto return_type = this->return_type();
         return {};
         // todo
         // return std::make_unique<FunctionDefinition>(export_token, function_token, identifier_token, type_parameter_list, parameter_list, return_type, )
