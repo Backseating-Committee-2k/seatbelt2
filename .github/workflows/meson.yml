@@ -1,0 +1,76 @@
+name: Meson CI
+
+on:
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+    workflow_dispatch:
+
+jobs:
+    build:
+        name: ${{ matrix.config.name }}
+        runs-on: ${{ matrix.config.os }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                # Customize the Meson build type here ("plain", "debug", "debugoptimized", "release", "minsize", "custom".)
+                config:
+                    - name: Windows MSVC Release
+                      os: windows-latest
+                      msvc: true
+                      buildtype: release
+                    - name: Linux Release
+                      os: ubuntu-22.04
+                      buildtype: release
+
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: "0"
+                  submodules: "recursive"
+
+            - name: Setup Meson
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install meson
+
+            - name: Setup MSVC
+              if: matrix.config.os == 'windows-latest' && matrix.config.msvc == true
+              uses: ilammy/msvc-dev-cmd@v1
+
+            - name: Install dependencies (Linux)
+              if: matrix.config.os == 'ubuntu-22.04'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install ninja-build build-essential git gcc-12 g++-12
+
+            - uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11"
+
+            - name: Configure (Windows)
+              if: matrix.config.os == 'windows-latest'
+              run: meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
+              
+            - name: Configure (Linux)
+              if: matrix.config.os == 'ubuntu-22.04'
+              run: CXX=g++-12 CC=gcc-12 meson setup build -Dbuildtype=${{ matrix.config.buildtype }}
+
+            - name: Build
+              run: meson compile -C build
+
+            - name: Upload artifacts - Linux
+              uses: actions/upload-artifact@v3
+              if: matrix.config.os == 'ubuntu-22.04'
+              with:
+                  name: ${{ matrix.config.name }} Executable
+                  path: build/Seatbelt2
+
+            - name: Upload artifacts - Windows
+              uses: actions/upload-artifact@v3
+              if: matrix.config.os == 'windows-latest'
+              with:
+                  name: ${{ matrix.config.name }} Executable
+                  path: build/Seatbelt2.exe

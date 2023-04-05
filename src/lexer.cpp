@@ -2,7 +2,27 @@
 #include "fmt/core.h"
 #include <array>
 #include <cassert>
+
+
+// taken from here: https://www.fluentcpp.com/2019/08/30/how-to-disable-a-warning-in-cpp/
+#if defined(_MSC_VER)
+#define DISABLE_WARNING_PUSH __pragma(warning(push))
+#define DISABLE_WARNING_POP __pragma(warning(pop))
+#define DISABLE_WARNING(warningNumber) __pragma(warning(disable : warningNumber))
+
+DISABLE_WARNING_PUSH
+//this is in /W4, and it's in a library header, so just disable warnings / this warning has no gcc counterpart, so no need for that
+DISABLE_WARNING(4458)
+
 #include <ctre-unicode.hpp>
+
+DISABLE_WARNING_POP
+
+#else
+#include <ctre-unicode.hpp>
+#endif
+
+
 #include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/core.hpp>
 #include <utility>
